@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
@@ -17,10 +18,19 @@
             margin: 0 auto;
         }
         h1 {
-            font-size: 24px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 28px;
             text-align: center;
             margin-bottom: 20px;
             color: #FFFFFF;
+        }
+        h1 a {
+            color: #FFFFFF;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        h1 a:hover {
+            color: #FFFFFF; /* 保持 hover 时颜色不变 */
         }
         .total-profit {
             background-color: #1C2A44;
@@ -33,12 +43,12 @@
         }
         .positions {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
         .position {
             background-color: #1C2A44;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             text-align: center;
@@ -48,8 +58,8 @@
             transform: translateY(-2px);
         }
         .position p {
-            margin: 6px 0;
-            font-size: 16px;
+            margin: 5px 0;
+            font-size: 14px;
         }
         .profit-positive {
             color: #28a745;
@@ -59,26 +69,31 @@
         }
         @media (max-width: 600px) {
             h1 {
-                font-size: 20px;
+                font-size: 24px;
             }
             .total-profit {
                 font-size: 16px;
             }
             .positions {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(4, 1fr); /* 移动端强制 6 行 4 列 */
+                grid-template-rows: repeat(6, auto);
+                gap: 8px;
             }
             .position p {
-                font-size: 14px;
+                font-size: 12px;
+            }
+            .position {
+                padding: 8px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>仓位收益</h1>
+        <h1><a href="https://github.com/WandsgYu/4-20vc/blob/main/index.html">Trust your judgment.</a></h1>
         <div class="total-profit">
-            <p id="totalProfit">总收益: $--</p>
-            <p id="totalProfitCny">人民币: ¥--</p>
+            <p id="totalProfit">--</p>
+            <p id="totalProfitCny">--</p>
         </div>
         <div class="positions" id="positions"></div>
     </div>
@@ -165,8 +180,8 @@
 
             // 更新总收益
             const totalProfitCny = totalProfitUsd * exchangeRate;
-            document.getElementById("totalProfit").textContent = `总收益: $${totalProfitUsd.toFixed(2)}`;
-            document.getElementById("totalProfitCny").textContent = `人民币: ¥${totalProfitCny.toFixed(2)}`;
+            document.getElementById("totalProfit").textContent = `${totalProfitUsd.toFixed(2)}`;
+            document.getElementById("totalProfitCny").textContent = `${totalProfitCny.toFixed(2)}`;
             document.title = totalProfitCny.toFixed(0);
         }
 

@@ -159,7 +159,16 @@
 
         async function updateProfits() {
             let totalProfitUsd = 0;
+            let btcPrice = null;
 
+            // 获取BTC价格并显示在totalProfit
+            const btcCurrentPrice = await fetchPrice("BTC");
+            if (btcCurrentPrice !== null) {
+                btcPrice = btcCurrentPrice;
+                document.getElementById("totalProfit").textContent = `${btcPrice.toFixed(2)}`;
+            }
+
+            // 计算所有仓位的总盈亏
             for (const pos of positions) {
                 const currentPrice = await fetchPrice(pos.symbol);
                 if (currentPrice !== null) {
@@ -178,11 +187,10 @@
                 }
             }
 
-            // 更新总收益
+            // 更新总盈亏CNY显示
             const totalProfitCny = totalProfitUsd * exchangeRate;
-            document.getElementById("totalProfit").textContent = `${totalProfitUsd.toFixed(2)}`;
             document.getElementById("totalProfitCny").textContent = `${totalProfitCny.toFixed(2)}`;
-            document.title = totalProfitCny.toFixed(0);
+            document.title = `${btcCurrentPrice.toFixed(0)} ${totalProfitCny.toFixed(0)} ` ;
         }
 
         // 初始更新

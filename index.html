@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #15202B;
+            color: #E6E6E6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #FFFFFF;
+        }
+        .total-profit {
+            background-color: #1C2A44;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+        .positions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .position {
+            background-color: #1C2A44;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .position:hover {
+            transform: translateY(-2px);
+        }
+        .position p {
+            margin: 6px 0;
+            font-size: 16px;
+        }
+        .profit-positive {
+            color: #28a745;
+        }
+        .profit-negative {
+            color: #dc3545;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+            .total-profit {
+                font-size: 16px;
+            }
+            .positions {
+                grid-template-columns: 1fr;
+            }
+            .position p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>仓位收益</h1>
+        <div class="total-profit">
+            <p id="totalProfit">总收益: $--</p>
+            <p id="totalProfitCny">人民币: ¥--</p>
+        </div>
+        <div class="positions" id="positions"></div>
+    </div>
+
+    <script>
+        const exchangeRate = 7.35; // USD to CNY
+        const updateInterval = 500; // 毫秒
+        const apiUrlBase = "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=";
+
+        // 仓位数据
+        const positions = [
+            { symbol: "BTC", positionValue: 552.7, entryPrice: 83749.9, isShort: false },
+            { symbol: "SOL", positionValue: 278, entryPrice: 126.27, isShort: false },
+            { symbol: "ETH", positionValue: 270, entryPrice: 1589.6, isShort: false },
+            { symbol: "DOGE", positionValue: 148.5, entryPrice: 0.152, isShort: false },
+            { symbol: "OP", positionValue: 123, entryPrice: 0.635, isShort: true },
+            { symbol: "FLOW", positionValue: 70, entryPrice: 0.34, isShort: true },
+            { symbol: "HBAR", positionValue: 70, entryPrice: 0.1568, isShort: true },
+            { symbol: "APT", positionValue: 70, entryPrice: 4.616, isShort: true },
+            { symbol: "ARB", positionValue: 70, entryPrice: 0.2796, isShort: true },
+            { symbol: "MEME", positionValue: 70, entryPrice: 0.001449, isShort: true },
+            { symbol: "JUP", positionValue: 70, entryPrice: 0.3545, isShort: true },
+            { symbol: "TAO", positionValue: 70, entryPrice: 231.01, isShort: true },
+            { symbol: "THETA", positionValue: 70, entryPrice: 0.6606, isShort: true },
+            { symbol: "JTO", positionValue: 70, entryPrice: 1.6061, isShort: true },
+            { symbol: "INJ", positionValue: 70, entryPrice: 7.712, isShort: true },
+            { symbol: "ONDO", positionValue: 70, entryPrice: 0.8332, isShort: true },
+            { symbol: "NEAR", positionValue: 70, entryPrice: 2.014, isShort: true },
+            { symbol: "ENS", positionValue: 70, entryPrice: 13.89, isShort: true },
+            { symbol: "MANA", positionValue: 70, entryPrice: 0.269, isShort: true },
+            { symbol: "AVAX", positionValue: 70, entryPrice: 19.041, isShort: true },
+            { symbol: "IP", positionValue: 70, entryPrice: 4.0514, isShort: true },
+            { symbol: "TIA", positionValue: 70, entryPrice: 2.4386, isShort: true },
+            { symbol: "LINK", positionValue: 70, entryPrice: 12.25, isShort: true },
+            { symbol: "KAIA", positionValue: 70, entryPrice: 0.1001, isShort: true }
+        ];
+
+        // 初始化仓位显示
+        const positionsContainer = document.getElementById("positions");
+        positions.forEach(pos => {
+            const div = document.createElement("div");
+            div.className = "position";
+            div.innerHTML = `
+                <p>${pos.symbol.toUpperCase()}</p>
+                <p id="${pos.symbol}Profit">$--</p>
+            `;
+            positionsContainer.appendChild(div);
+        });
+
+        async function fetchPrice(symbol) {
+            try {
+                const response = await fetch(`${apiUrlBase}${symbol}USDT`);
+                const data = await response.json();
+                if (data.code !== "00000") {
+                    throw new Error(`API error: ${data.msg}`);
+                }
+                return parseFloat(data.data[0].lastPr);
+            } catch (error) {
+                console.error(`获取 ${symbol} 价格失败：`, error);
+                return null;
+            }
+        }
+
+        async function updateProfits() {
+            let totalProfitUsd = 0;
+
+            for (const pos of positions) {
+                const currentPrice = await fetchPrice(pos.symbol);
+                if (currentPrice !== null) {
+                    // 计算仓位数量
+                    const positionSize = pos.positionValue / pos.entryPrice;
+                    // 计算收益
+                    const profit = pos.isShort
+                        ? (pos.entryPrice - currentPrice) * positionSize
+                        : (currentPrice - pos.entryPrice) * positionSize;
+                    totalProfitUsd += profit;
+
+                    // 更新收益显示
+                    const profitElement = document.getElementById(`${pos.symbol}Profit`);
+                    profitElement.textContent = `$${profit.toFixed(2)}`;
+                    profitElement.className = profit >= 0 ? "profit-positive" : "profit-negative";
+                }
+            }
+
+            // 更新总收益
+            const totalProfitCny = totalProfitUsd * exchangeRate;
+            document.getElementById("totalProfit").textContent = `总收益: $${totalProfitUsd.toFixed(2)}`;
+            document.getElementById("totalProfitCny").textContent = `人民币: ¥${totalProfitCny.toFixed(2)}`;
+            document.title = totalProfitCny.toFixed(0);
+        }
+
+        // 初始更新
+        updateProfits();
+
+        // 每 0.5 秒更新
+        setInterval(updateProfits, updateInterval);
+    </script>
+</body>
+</html>
